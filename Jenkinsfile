@@ -4,7 +4,8 @@ pipeline {
     environment {
         SLACK_CHANNEL = '#jenkins-builds'
         SLACK_CRED_ID = 'slack-boot'            // Ton credential Slack dans Jenkins
-        GIT_REPO = 'https://github.com/nell852/WebApp.git'
+        GIT_REPO = 'git@github.com:nell852/WebApp.git' // SSH au lieu de HTTPS
+        GIT_CRED_ID = 'jenkins-github-ssh'       // Credential SSH ajouté dans Jenkins
     }
 
     triggers {
@@ -15,8 +16,15 @@ pipeline {
         stage('Clone') {
             steps {
                 echo "🔁 Clonage de la branche déclenchante depuis ${GIT_REPO}"
-                // Checkout automatique de la branche qui a reçu le push
-                checkout scm
+                checkout([$class: 'GitSCM',
+                          branches: [[name: '*/main']],
+                          doGenerateSubmoduleConfigurations: false,
+                          extensions: [],
+                          userRemoteConfigs: [[
+                              url: "${GIT_REPO}",
+                              credentialsId: "${GIT_CRED_ID}"
+                          ]]
+                ])
             }
             post {
                 success {
