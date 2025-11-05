@@ -3,23 +3,20 @@ pipeline {
 
     environment {
         SLACK_CHANNEL = '#jenkins-builds'
-        SLACK_CRED_ID = 'slack-boot'    // ID du Secret Text Jenkins pour Slack
+        SLACK_CRED_ID = 'slack-boot'
         GIT_REPO = 'https://github.com/nell852/WebApp.git'
         MAIN_BRANCH = 'main'
     }
 
     triggers {
-        // Déclenche le pipeline pour TOUT commit GitHub sur n’importe quelle branche
-        githubPush()
+        githubPush() // déclenchement auto via webhook (ngrok requis si localhost)
     }
 
     stages {
         stage('Clone') {
             steps {
-                echo "🔁 Clonage du dépôt principal (${MAIN_BRANCH})..."
-                // Si ton repo est public :
+                echo "🔁 Clonage du dépôt (${MAIN_BRANCH}) depuis ${GIT_REPO}"
                 git branch: "${MAIN_BRANCH}", url: "${GIT_REPO}"
-                // Si privé : ajoute `credentialsId: 'your-git-cred-id'`
             }
             post {
                 success {
@@ -38,7 +35,7 @@ pipeline {
         stage('Build') {
             steps {
                 echo ":construction: Construction du projet..."
-                sh 'echo "Simulating build..." && sleep 2'
+                sh 'echo "Simulation du build..." && sleep 2'
             }
             post {
                 success {
@@ -56,8 +53,8 @@ pipeline {
 
         stage('Tests') {
             steps {
-                echo ":test_tube: Exécution des tests..."
-                sh 'echo "Simulating tests..." && sleep 2'
+                echo ":test_tube: Lancement des tests..."
+                sh 'echo "Simulation des tests..." && sleep 2'
             }
             post {
                 success {
@@ -75,8 +72,8 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                echo ":rocket: Déploiement en cours..."
-                sh 'echo "Simulating deploy..." && sleep 2'
+                echo ":rocket: Déploiement du projet..."
+                sh 'echo "Simulation du déploiement..." && sleep 2'
             }
             post {
                 success {
@@ -109,16 +106,6 @@ pipeline {
                       tokenCredentialId: "${SLACK_CRED_ID}",
                       color: 'danger',
                       message: """:x: *Build global échoué !*
-*Projet:* ${env.JOB_NAME}
-*Build:* #${env.BUILD_NUMBER}
-*Durée:* ${currentBuild.durationString}
-:link: ${env.BUILD_URL}""")
-        }
-        unstable {
-            slackSend(channel: "${SLACK_CHANNEL}",
-                      tokenCredentialId: "${SLACK_CRED_ID}",
-                      color: 'warning',
-                      message: """:warning: *Build instable !*
 *Projet:* ${env.JOB_NAME}
 *Build:* #${env.BUILD_NUMBER}
 *Durée:* ${currentBuild.durationString}
