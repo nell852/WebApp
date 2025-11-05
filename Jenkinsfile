@@ -3,20 +3,20 @@ pipeline {
 
     environment {
         SLACK_CHANNEL = '#jenkins-builds'
-        SLACK_CRED_ID = 'slack-boot'
+        SLACK_CRED_ID = 'slack-boot'            // Ton credential Slack dans Jenkins
         GIT_REPO = 'https://github.com/nell852/WebApp.git'
-        MAIN_BRANCH = 'main'
     }
 
     triggers {
-        githubPush() // déclenchement auto via webhook (ngrok requis si localhost)
+        githubPush() // Déclenchement automatique via webhook
     }
 
     stages {
         stage('Clone') {
             steps {
-                echo "🔁 Clonage du dépôt (${MAIN_BRANCH}) depuis ${GIT_REPO}"
-                git branch: "${MAIN_BRANCH}", url: "${GIT_REPO}"
+                echo "🔁 Clonage de la branche déclenchante depuis ${GIT_REPO}"
+                // Checkout automatique de la branche qui a reçu le push
+                checkout scm
             }
             post {
                 success {
@@ -106,6 +106,16 @@ pipeline {
                       tokenCredentialId: "${SLACK_CRED_ID}",
                       color: 'danger',
                       message: """:x: *Build global échoué !*
+*Projet:* ${env.JOB_NAME}
+*Build:* #${env.BUILD_NUMBER}
+*Durée:* ${currentBuild.durationString}
+:link: ${env.BUILD_URL}""")
+        }
+        unstable {
+            slackSend(channel: "${SLACK_CHANNEL}",
+                      tokenCredentialId: "${SLACK_CRED_ID}",
+                      color: 'warning',
+                      message: """:warning: *Build global instable !*
 *Projet:* ${env.JOB_NAME}
 *Build:* #${env.BUILD_NUMBER}
 *Durée:* ${currentBuild.durationString}
