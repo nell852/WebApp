@@ -8,7 +8,7 @@ pipeline {
         GIT_CRED_ID = 'jenkins-github-ssh'
 
         DOCKERHUB_CRED_ID = 'dockerhub-cred'
-        DOCKER_IMAGE = 'nell852/webapp'
+        DOCKER_IMAGE = 'nellblaise/webapp'
         APP_PORT = '8084' // port de déploiement à configurer
     }
 
@@ -75,3 +75,4 @@ pipeline {
         }
     }
 }
+
