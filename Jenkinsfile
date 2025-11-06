@@ -9,7 +9,7 @@ pipeline {
 
         DOCKERHUB_CRED_ID = 'dockerhub-cred'
         DOCKER_IMAGE = 'nellblaise/webapp'
-        APP_PORT = '8084' // port de déploiement à configurer
+        APP_PORT = '8084'
     }
 
     triggers {
@@ -26,15 +26,29 @@ pipeline {
                     userRemoteConfigs: [[url: "${GIT_REPO}", credentialsId: "${GIT_CRED_ID}"]]
                 ])
             }
+            post {
+                success {
+                    slackSend(channel: "${SLACK_CHANNEL}", tokenCredentialId: "${SLACK_CRED_ID}", message: ":white_check_mark: Étape Clone réussie ✅")
+                }
+                failure {
+                    slackSend(channel: "${SLACK_CHANNEL}", tokenCredentialId: "${SLACK_CRED_ID}", message: ":x: Étape Clone échouée ❌")
+                }
+            }
         }
 
         stage('Build Docker Image') {
             steps {
                 echo ":construction: Construction de l'image Docker..."
                 script {
-                    sh """
-                        docker build -t ${DOCKER_IMAGE}:latest .
-                    """
+                    sh "docker build -t ${DOCKER_IMAGE}:latest ."
+                }
+            }
+            post {
+                success {
+                    slackSend(channel: "${SLACK_CHANNEL}", tokenCredentialId: "${SLACK_CRED_ID}", message: ":white_check_mark: Étape Build Docker réussie ✅")
+                }
+                failure {
+                    slackSend(channel: "${SLACK_CHANNEL}", tokenCredentialId: "${SLACK_CRED_ID}", message: ":x: Étape Build Docker échouée ❌")
                 }
             }
         }
@@ -47,6 +61,14 @@ pipeline {
                         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
                         docker push ${DOCKER_IMAGE}:latest
                     """
+                }
+            }
+            post {
+                success {
+                    slackSend(channel: "${SLACK_CHANNEL}", tokenCredentialId: "${SLACK_CRED_ID}", message: ":white_check_mark: Étape Push Docker réussie ✅")
+                }
+                failure {
+                    slackSend(channel: "${SLACK_CHANNEL}", tokenCredentialId: "${SLACK_CRED_ID}", message: ":x: Étape Push Docker échouée ❌")
                 }
             }
         }
@@ -63,16 +85,23 @@ pipeline {
                     """
                 }
             }
+            post {
+                success {
+                    slackSend(channel: "${SLACK_CHANNEL}", tokenCredentialId: "${SLACK_CRED_ID}", message: ":white_check_mark: Étape Deploy réussie ✅")
+                }
+                failure {
+                    slackSend(channel: "${SLACK_CHANNEL}", tokenCredentialId: "${SLACK_CRED_ID}", message: ":x: Étape Deploy échouée ❌")
+                }
+            }
         }
     }
 
     post {
         success {
-            slackSend(channel: "${SLACK_CHANNEL}", tokenCredentialId: "${SLACK_CRED_ID}", message: ":white_check_mark: Déploiement réussi sur le port ${APP_PORT} !")
+            slackSend(channel: "${SLACK_CHANNEL}", tokenCredentialId: "${SLACK_CRED_ID}", message: ":tada: Pipeline complet réussi ! Toutes les étapes ✅")
         }
         failure {
-            slackSend(channel: "${SLACK_CHANNEL}", tokenCredentialId: "${SLACK_CRED_ID}", message: ":x: Échec du pipeline Jenkins !")
+            slackSend(channel: "${SLACK_CHANNEL}", tokenCredentialId: "${SLACK_CRED_ID}", message: ":x: Pipeline échoué ! Une ou plusieurs étapes ❌")
         }
     }
 }
-
